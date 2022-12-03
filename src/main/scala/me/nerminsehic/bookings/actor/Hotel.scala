@@ -35,7 +35,7 @@ object Hotel {
     event match {
       case ReservationAccepted(res) =>
         val newState = state.copy(reservations = state.reservations + res)
-        println("state changed: $newState")
+        println(s"state changed: $newState")
         newState
 
       case _ =>
