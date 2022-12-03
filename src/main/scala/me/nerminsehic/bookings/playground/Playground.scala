@@ -2,6 +2,7 @@ package me.nerminsehic.bookings.playground
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
+import scala.concurrent.duration._
 
 object Playground {
   def main(args: Array[String]): Unit = {
