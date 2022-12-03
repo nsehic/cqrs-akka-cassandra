@@ -1,7 +1,6 @@
-package me.nerminsehic.bookings.playground.model
+package me.nerminsehic.bookings.model
 
 import akka.actor.typed.ActorRef
-
 import java.sql.Date
 
 // commands

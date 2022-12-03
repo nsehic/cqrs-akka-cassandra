@@ -1,4 +1,4 @@
-package me.nerminsehic.bookings.playground.model
+package me.nerminsehic.bookings.model
 
 import java.sql.Date
 import scala.util.Random

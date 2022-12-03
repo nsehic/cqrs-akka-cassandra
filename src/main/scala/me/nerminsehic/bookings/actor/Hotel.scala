@@ -1,9 +1,9 @@
-package me.nerminsehic.bookings.playground.actor
+package me.nerminsehic.bookings.actor
 
 import akka.actor.typed.Behavior
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import me.nerminsehic.bookings.playground.model._
+import me.nerminsehic.bookings.model._
 
 object Hotel {
   case class State(reservations: Set[Reservation])
@@ -15,7 +15,7 @@ object Hotel {
         val tentativeReservation = Reservation.make(guestId, hotelId, startDate, endDate, roomNumber)
         val conflictingReservation: Option[Reservation] = state.reservations.find(r => r.intersect(tentativeReservation))
 
-        if(conflictingReservation.isEmpty) {
+        if (conflictingReservation.isEmpty) {
           Effect
             .persist(ReservationAccepted(tentativeReservation)) // persist
             .thenReply(replyTo)(s => ReservationAccepted(tentativeReservation)) // reply to the "manager"
