@@ -24,7 +24,23 @@ object Hotel {
         }
 
       case ChangeReservation(confirmationNumber, startDate, endDate, roomNumber, replyTo) =>
-        Effect.none // TODO
+        val oldReservationOption = state.reservations.find(_.confirmationNumber == confirmationNumber)
+        val newReservationOption = oldReservationOption
+          .map(res => res.copy(startDate = startDate, endDate = endDate, roomNumber = roomNumber))
+        val reservationUpdatedEventOption = oldReservationOption.zip(newReservationOption)
+          .map(ReservationUpdated.tupled)
+        val conflictingReservationOption = newReservationOption.flatMap { tentativeReservation =>
+          state.reservations.find(r => r.confirmationNumber != confirmationNumber && r.intersect(tentativeReservation))
+        }
+
+        (reservationUpdatedEventOption, conflictingReservationOption) match {
+          case (None, _) =>
+            Effect.reply(replyTo)(CommandFailure(s"Cannot update reservation $confirmationNumber: not found"))
+          case (_, Some(_)) =>
+            Effect.reply(replyTo)(CommandFailure(s"Cannot update reservation $confirmationNumber: conflicting reservation"))
+          case (Some(resUpdated), None) =>
+            Effect.persist(resUpdated).thenReply(replyTo)((s: State) => resUpdated)
+        }
 
       case CancelReservation(confirmationNumber, replyTo) =>
         Effect.none // TODO
@@ -37,7 +53,10 @@ object Hotel {
         val newState = state.copy(reservations = state.reservations + res)
         println(s"state changed: $newState")
         newState
-
+      case ReservationUpdated(oldReservation, newReservation) =>
+        val newState = state.copy(reservations = state.reservations - oldReservation + newReservation)
+        println(s"state changed: $newState")
+        newState
       case _ =>
         state // TODO
     }
