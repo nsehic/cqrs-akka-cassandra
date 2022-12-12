@@ -43,7 +43,13 @@ object Hotel {
         }
 
       case CancelReservation(confirmationNumber, replyTo) =>
-        Effect.none // TODO
+        val reservationOption = state.reservations.find(_.confirmationNumber == confirmationNumber)
+        reservationOption match {
+          case Some(res) =>
+            Effect.persist(ReservationCancelled(res)).thenReply(replyTo)(s => ReservationCancelled(res))
+          case None =>
+            Effect.reply(replyTo)(CommandFailure(s"Cannot cancel reservation $confirmationNumber: not found"))
+        }
 
     }
 
@@ -55,6 +61,10 @@ object Hotel {
         newState
       case ReservationUpdated(oldReservation, newReservation) =>
         val newState = state.copy(reservations = state.reservations - oldReservation + newReservation)
+        println(s"state changed: $newState")
+        newState
+      case ReservationCancelled(res) =>
+        val newState = state.copy(reservations = state.reservations - res)
         println(s"state changed: $newState")
         newState
       case _ =>

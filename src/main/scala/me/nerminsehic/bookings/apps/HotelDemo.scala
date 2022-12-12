@@ -21,6 +21,7 @@ object HotelDemo {
 
 //      hotel ! MakeReservation("nermin", Date.valueOf("2022-12-03"), Date.valueOf("2022-12-10"), 101, logger)
 //      hotel ! ChangeReservation("B5NJGQ9NNN", Date.valueOf("2022-12-03"), Date.valueOf("2022-12-14"), 101, logger)
+      hotel ! CancelReservation("B5NJGQ9NNN", logger)
       Behaviors.empty
     }
 
