@@ -4,7 +4,6 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.stream.alpakka.cassandra.scaladsl.CassandraSessionRegistry
 import akka.stream.scaladsl.{Sink, Source}
-
 import java.time.LocalDate
 import scala.concurrent.Future
 
@@ -17,7 +16,7 @@ object CassandraTableCleaner {
   def clearTables(): Unit = {
     val daysFree = Source (
       for {
-        hotelId <- List("testHotel")
+        hotelId <- (1 to 100).map(i => s"hotel_$i")
         roomNumber <- 1 to 100
         day <- (0 until 365).map(LocalDate.of(2023, 1,1).plusDays(_))
       } yield (hotelId, roomNumber, day)

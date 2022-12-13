@@ -80,7 +80,7 @@ object HotelEventReader {
 
   // all events for a persistence ID
   private val eventsForTestHotel = readJournal
-    .eventsByPersistenceId("testHotel", 0, Long.MaxValue)
+    .eventsByPersistenceId("hotel_37", 0, Long.MaxValue)
     .map(_.event)
     .mapAsync(8) {
       case ReservationAccepted(res) =>
