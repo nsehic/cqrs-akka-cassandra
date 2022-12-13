@@ -88,7 +88,10 @@ object HotelEventReader {
         makeReservation(res)
       case ReservationUpdated(oldReservation, newReservation) =>
         println(s"CHANGING RESERVATION: from $oldReservation to $newReservation")
-        Future.successful(()) // TODO insert data into cassandra
+        for {
+          _ <- removeReservation(oldReservation)
+          _ <- makeReservation(newReservation)
+        } yield ()
       case ReservationCancelled(res) =>
         println(s"CANCELLING RESERVATION: $res")
         removeReservation(res)
