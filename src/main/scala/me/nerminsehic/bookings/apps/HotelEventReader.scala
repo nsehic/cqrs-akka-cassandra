@@ -52,6 +52,32 @@ object HotelEventReader {
     Future.sequence(reservationGuestFuture :: reservationGuestDateFuture :: blockedDaysFutures.toList).map(_ => ())
   }
 
+  def removeReservation(reservation: Reservation): Future[Unit] = {
+    val Reservation(guestId, hotelId, startDate, endDate, roomNumber, confirmationNumber) = reservation
+    val startLocalDate = startDate.toLocalDate
+    val endLocalDate = endDate.toLocalDate
+    val daysBlocked = startLocalDate.until(endLocalDate, ChronoUnit.DAYS).toInt
+
+    val blockedDaysFutures = for {
+      days <- 0 until daysBlocked
+    } yield session.executeWrite(
+      "UPDATE hotel.available_rooms_by_hotel_date SET is_available = true WHERE " +
+        s"hotel_id='$hotelId' and date='${startLocalDate.plusDays(days)}' and room_number=$roomNumber"
+    ).recover(e => println(s"Room day unblocking failed: ${e}"))
+
+    val reservationGuestDateFuture = session.executeWrite(
+      "DELETE FROM reservation.reservations_by_hotel_date WHERE " +
+        s"hotel_id='$hotelId' and start_date='$startDate' and room_number=$roomNumber"
+    ).recover(e => println(s"Reservation removal for date failed: ${e}"))
+
+    val reservationGuestFuture = session.executeWrite(
+      "DELETE FROM reservation.reservations_by_guest WHERE " +
+        s"guest_last_name='Sehic' and confirm_number='$confirmationNumber'"
+    ).recover(e => println(s"Reservation removal for guest failed: ${e}"))
+
+    Future.sequence(reservationGuestFuture :: reservationGuestDateFuture :: blockedDaysFutures.toList).map(_ => ())
+  }
+
   // all events for a persistence ID
   private val eventsForTestHotel = readJournal
     .eventsByPersistenceId("testHotel", 0, Long.MaxValue)
@@ -65,7 +91,7 @@ object HotelEventReader {
         Future.successful(()) // TODO insert data into cassandra
       case ReservationCancelled(res) =>
         println(s"CANCELLING RESERVATION: $res")
-        Future.successful(()) // TODO insert data into cassandra
+        removeReservation(res)
     }
   def main(args: Array[String]): Unit = {
     eventsForTestHotel.to(Sink.ignore).run()
